@@ -4,11 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 
 import javax.crypto.SecretKey;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 
 public class JwtProvider {
