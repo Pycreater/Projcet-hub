@@ -1,10 +1,19 @@
 package com.pratik.controller;
 
+import com.pratik.config.JwtProvider;
 import com.pratik.model.User;
 import com.pratik.repository.UserRepository;
+import com.pratik.request.LoginRequest;
+import com.pratik.response.AuthResponse;
+import com.pratik.service.CustomUserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,13 +30,18 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private CustomUserDetailsImpl customUserDetails;
+
     @PostMapping("/signup")
-    public ResponseEntity<?> createUserHandler(@RequestBody User user) {
+    public ResponseEntity<AuthResponse> createUserHandler(@RequestBody User user) {
         // Check if the user already exists
         User existingUser = userRepository.findByEmail(user.getEmail());
 
         if (existingUser != null) {
-            return new ResponseEntity<>("Email already exists with another account.", HttpStatus.BAD_REQUEST);
+            AuthResponse errorResponse = new AuthResponse();
+            errorResponse.setMessage("Email already exists with another account.");
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
 
         // Create a new user and set the encoded password
@@ -39,7 +53,46 @@ public class AuthController {
         // Save the new user to the repository
         User savedUser = userRepository.save(newUser);
 
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String jwt = JwtProvider.genrateToken(authentication);
+
+        AuthResponse res = new AuthResponse();
+        res.setMessage("signup success");
+        res.setJwt(jwt);
+
         // Return the response with the created user
-        return new ResponseEntity<>(savedUser, HttpStatus.CREATED);
+        return new ResponseEntity<>(res, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/signing")
+    public ResponseEntity<AuthResponse> signIn(@RequestBody LoginRequest loginRequest) {
+        String username = loginRequest.getEmail();
+        String password = loginRequest.getPassword();
+
+        Authentication authentication = authenticate(username, password);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String jwt = JwtProvider.genrateToken(authentication);
+
+        AuthResponse res = new AuthResponse();
+        res.setMessage("signin success");
+        res.setJwt(jwt);
+
+        // Return the response with the created user
+        return new ResponseEntity<>(res, HttpStatus.CREATED);
+    }
+
+    private Authentication authenticate(String username, String password) {
+
+        UserDetails userDetails = customUserDetails.loadUserByUsername(username);
+        if(userDetails == null) {
+            throw new BadCredentialsException("Invalid Username.");
+        }
+        if(!passwordEncoder.matches(password,userDetails.getPassword())){
+            throw new BadCredentialsException("Invalid Password.");
+        }
+        return new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
     }
 }
