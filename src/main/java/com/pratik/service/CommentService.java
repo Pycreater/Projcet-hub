@@ -9,9 +9,9 @@ import java.util.List;
 @Service
 public interface CommentService {
 
-    Comment createComment(Long issueId, Long userId, String comment);
+    Comment createComment(Long issueId, Long userId, String comment) throws Exception;
 
-    void deleteComment(Long commentId, Long userId);
+    void deleteComment(Long commentId, Long userId) throws Exception;
 
     List<Comment> findCommentByIssue(Long issueId);
 }
