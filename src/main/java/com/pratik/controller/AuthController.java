@@ -6,6 +6,7 @@ import com.pratik.repository.UserRepository;
 import com.pratik.request.LoginRequest;
 import com.pratik.response.AuthResponse;
 import com.pratik.service.CustomUserDetailsImpl;
+import com.pratik.service.SubscriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +34,9 @@ public class AuthController {
     @Autowired
     private CustomUserDetailsImpl customUserDetails;
 
+    @Autowired
+    private SubscriptionService subscriptionService;
+
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> createUserHandler(@RequestBody User user) {
         // Check if the user already exists
@@ -52,6 +56,8 @@ public class AuthController {
 
         // Save the new user to the repository
         User savedUser = userRepository.save(newUser);
+
+        subscriptionService.createSubscription(savedUser);
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
         SecurityContextHolder.getContext().setAuthentication(authentication);
