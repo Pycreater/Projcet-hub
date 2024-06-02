@@ -9,19 +9,29 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 
 public class JwtProvider {
-    static SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
-    public static String genrateToken(Authentication auth) {
 
-        return Jwts.builder().setIssuedAt(new Date())
-                .setExpiration(new Date(new Date().getTime()+86400000))
-                .claim("email",auth.getName())
+    static SecretKey key = Keys.hmacShaKeyFor(JwtConstant.SECRET_KEY.getBytes());
+
+    public static String generateToken(Authentication auth) {
+        return Jwts.builder()
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 hours
+                .claim("email", auth.getName())
                 .signWith(key)
                 .compact();
     }
 
     public static String getEmailFromToken(String jwt) {
-        Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jwt).getBody();
+//        if (jwt.startsWith("Bearer ")) {
+            jwt = jwt.substring(7);
+//        }
 
-        return String.valueOf(claims.get("email"));
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(jwt)
+                .getBody();
+
+        return claims.get("email", String.class);
     }
 }

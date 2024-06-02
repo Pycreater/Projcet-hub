@@ -30,40 +30,38 @@ public class PaymentController {
     public ResponseEntity<PaymentLinkResponse> createPaymentLink(
             @PathVariable PlanType planType,
             @RequestHeader("Authorization") String jwt
-            ) throws Exception{
+    ) throws Exception {
         User user = userService.findUserProfileByJwt(jwt);
-        int amount = 799 * 100;
-        if(planType.equals(PlanType.ANNUALLY)) {
-            amount = amount * 12;
-            amount = (int) (amount * 0.7);
+        int amount = 799 * 100; // Amount in paise
+
+        if (planType.equals(PlanType.ANNUALLY)) {
+            amount *= 12;
+            amount *= 0.7; // Applying 30% discount
         }
 
-            RazorpayClient razorpayClient = new  RazorpayClient(apiKey, apiSecret);
+        RazorpayClient razorpayClient = new RazorpayClient(apiKey, apiSecret);
 
-            JSONObject paymentLinkRequest = new JSONObject();
-            paymentLinkRequest.put("amount", amount);
-            paymentLinkRequest.put("currency","INR");
+        JSONObject paymentLinkRequest = new JSONObject();
+        paymentLinkRequest.put("amount", amount);
+        paymentLinkRequest.put("currency", "INR");
 
-            JSONObject customer = new JSONObject();
-            customer.put("name", user.getFullName());
-            customer.put("email", user.getEmail());
-            paymentLinkRequest.put("customer", customer);
+        JSONObject customer = new JSONObject();
+        customer.put("name", user.getFullName());
+        customer.put("email", user.getEmail());
+        paymentLinkRequest.put("customer", customer);
 
-            JSONObject notify = new JSONObject();
-            notify.put("email", true);
-            paymentLinkRequest.put("notify", notify);
+        JSONObject notify = new JSONObject();
+        notify.put("email", true);
+        paymentLinkRequest.put("notify", notify);
 
-            paymentLinkRequest.put("callback_url", "http://localhost:5173/upgrade_plan/success?planType"+planType);
+        paymentLinkRequest.put("callback_url", "http://localhost:5173/upgrade_plan/success?planType=" + planType);
 
-            PaymentLink payment = razorpayClient.paymentLink.create(paymentLinkRequest);
+        PaymentLink payment = razorpayClient.paymentLink.create(paymentLinkRequest);
 
-            String paymentLinkId = payment.get("id");
-            String paymentLinkUrl = payment.get("short_url");
+        PaymentLinkResponse res = new PaymentLinkResponse();
+        res.setPayment_link_url(payment.get("short_url"));
+        res.setPayment_link_id(payment.get("id"));
 
-            PaymentLinkResponse res = new PaymentLinkResponse();
-            res.setPayment_link_url(paymentLinkUrl);
-            res.setPayment_link_id(paymentLinkId);
-
-            return new ResponseEntity<>(res, HttpStatus.CREATED);
+        return new ResponseEntity<>(res, HttpStatus.CREATED);
     }
 }

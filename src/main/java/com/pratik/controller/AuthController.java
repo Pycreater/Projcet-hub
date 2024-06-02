@@ -62,7 +62,7 @@ public class AuthController {
         Authentication authentication = new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = JwtProvider.genrateToken(authentication);
+        String jwt = JwtProvider.generateToken(authentication);
 
         AuthResponse res = new AuthResponse();
         res.setMessage("signup success");
@@ -80,7 +80,7 @@ public class AuthController {
         Authentication authentication = authenticate(username, password);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = JwtProvider.genrateToken(authentication);
+        String jwt = JwtProvider.generateToken(authentication);
 
         AuthResponse res = new AuthResponse();
         res.setMessage("signin success");
