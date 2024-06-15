@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class ProjectServiceImpl implements ProjectService{
+public class ProjectServiceImpl implements ProjectService {
 
     @Autowired
     private ProjectRepository projectRepository;
@@ -49,13 +49,13 @@ public class ProjectServiceImpl implements ProjectService{
     public List<Project> getProjectByTeam(User user, String category, String tag) throws Exception {
         List<Project> projects = projectRepository.findByTeamContainingOrOwner(user, user);
 
-        if(category != null) {
+        if (category != null) {
             projects = projects.stream()
                     .filter(project -> project.getCategory().equals(category))
                     .collect(Collectors.toList());
         }
 
-        if(tag != null) {
+        if (tag != null) {
             projects = projects.stream()
                     .filter(project -> project.getTags().contains(tag))
                     .collect(Collectors.toList());
@@ -66,7 +66,7 @@ public class ProjectServiceImpl implements ProjectService{
     @Override
     public Project getProjectById(Long projectId) throws Exception {
         Optional<Project> optionalProject = projectRepository.findById(projectId);
-        if(optionalProject.isEmpty()) {
+        if (optionalProject.isEmpty()) {
             throw new Exception("project not found.");
         }
         return optionalProject.get();
@@ -94,10 +94,15 @@ public class ProjectServiceImpl implements ProjectService{
     public void addUserToProject(Long projectId, Long userId) throws Exception {
         Project project = getProjectById(projectId);
         User user = userService.findUserById(userId);
-        if (!project.getTeam().contains(user)) {
-            project.getChat().getUsers().add(user);
-            project.getTeam().add(user);
+
+        for (User member : project.getTeam()) {
+            if (member.getId().equals(userId)) {
+                return;
+            }
         }
+
+        project.getChat().getUsers().add(user);
+        project.getTeam().add(user);
         projectRepository.save(project);
     }
 
