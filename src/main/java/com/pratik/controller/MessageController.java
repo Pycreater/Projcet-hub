@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+//springboot is crazy
 @RestController
 @RequestMapping("/api/messages")
 public class MessageController {
